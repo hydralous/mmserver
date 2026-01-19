@@ -9,7 +9,7 @@ const computerInfoSchema = new mongoose.Schema({
 
 const dataSchema = new mongoose.Schema({
   hash: { type: String, required: true },
-  computerInfo: { type: [computerInfoSchema], required: true },
+  computerInfo: { type: computerInfoSchema, required: true },
   path: { type: String, required: true },
   data: { type: String, required: true },
 });
