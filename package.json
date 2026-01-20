@@ -1,7 +1,11 @@
 {
   "name": "server",
+  "scripts": {
+    "dev": "node index.js"
+  },
   "dependencies": {
     "body-parser": "^2.2.2",
+    "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "mongoose": "^9.1.4"
