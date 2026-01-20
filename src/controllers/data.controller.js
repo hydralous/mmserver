@@ -1,4 +1,5 @@
 const dataService = require('../services/data.service');
+const DataModel = require('../models/Data');
 
 // POST endpoint to save the data
 const saveData = async (req, res) => {
@@ -7,6 +8,7 @@ const saveData = async (req, res) => {
   if (!hash || !computerInfo || !data || !path) {
     return res.status(400).json({ message: 'All fields are required' });
   }
+  console.log(path)
 
   try {
     const existingData = await DataModel.findOne({ hash });
