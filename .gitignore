@@ -40,3 +40,8 @@ Thumbs.db
 
 # Optional yarn cache directory
 .yarn-cache/
+
+# Application data
+data/
+temp/
+uploads/
