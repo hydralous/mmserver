@@ -169,5 +169,6 @@ module.exports = {
   getAllClientsInfo,
   clients,
   admins,
+  pendingCommands,
 };
 

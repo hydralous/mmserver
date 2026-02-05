@@ -70,11 +70,46 @@ function handleFileUpload(req, res) {
           targetPath = file.originalname; // fallback to original name
         }
 
-        console.log("targetPath", targetPath);
-        // Force inside safe uploads root
-        targetPath = targetPath.replaceAll(":", "");
-        targetPath = path.join(__dirname, "../../uploads", hostname, targetPath);
+        console.log("Original targetPath:", targetPath);
+        
+        // Normalize path for cross-platform compatibility
+        // Remove Windows drive letters (C:, D:, etc.) - only remove if it's a drive letter pattern
+        if (process.platform === 'win32') {
+          targetPath = targetPath.replace(/^[A-Za-z]:/, ''); // Remove drive letter
+        }
+        
+        // Remove leading slashes/backslashes to make path relative
+        // This prevents absolute paths from being used (security)
+        targetPath = targetPath.replace(/^[/\\]+/, '');
+        
+        // Replace backslashes with forward slashes for cross-platform compatibility
+        targetPath = targetPath.replace(/\\/g, '/');
+        
+        // Remove any path traversal attempts (../, ..\, etc.)
+        targetPath = targetPath.replace(/\.\./g, '');
+        
+        // Remove any remaining colons (Windows drive letter remnants)
+        targetPath = targetPath.replace(/:/g, '');
+        
+        // Sanitize filename - remove any invalid characters
+        targetPath = targetPath.replace(/[<>"|?*\x00-\x1f]/g, '_');
+        
+        // Join with uploads directory (always relative)
+        const uploadsRoot = path.join(__dirname, "../../uploads", hostname);
+        targetPath = path.join(uploadsRoot, targetPath);
+        
+        // Normalize the final path (resolve .. and . segments)
+        targetPath = path.normalize(targetPath);
+        
+        // Security check: ensure the final path is still within uploads root
+        const resolvedUploadsRoot = path.resolve(uploadsRoot);
+        const resolvedTargetPath = path.resolve(targetPath);
+        if (!resolvedTargetPath.startsWith(resolvedUploadsRoot)) {
+          throw new Error(`Path traversal detected: ${targetPath}`);
+        }
 
+        console.log("Final targetPath:", targetPath);
+        
         // Ensure directory exists
         fs.mkdirSync(path.dirname(targetPath), { recursive: true });
 
