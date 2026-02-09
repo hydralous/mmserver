@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const uploadController = require("../controllers/uploadController");
+const asyncHandler = require("../utils/asyncHandler");
 
 /**
  * POST /upload
@@ -12,7 +13,7 @@ router.post("/", uploadController.handleFileUpload);
  * POST /upload/request
  * Request upload of file or directory from client
  */
-router.post("/request", uploadController.handleUploadRequest);
+router.post("/request", asyncHandler(uploadController.handleUploadRequest));
 
 module.exports = router;
 

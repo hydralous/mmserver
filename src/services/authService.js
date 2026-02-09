@@ -1,4 +1,5 @@
 const User = require("../models/User");
+const AppError = require("../utils/AppError");
 const {
   hashPassword,
   comparePassword,
@@ -20,11 +21,11 @@ async function registerUser(userData) {
 
   // Validation
   if (!email || !name || !password) {
-    throw new Error("Email, name, and password are required");
+    throw new AppError("Email, name, and password are required", 400);
   }
 
   if (password.length < 8) {
-    throw new Error("Password must be at least 8 characters long");
+    throw new AppError("Password must be at least 8 characters long", 400);
   }
 
   // Check if user already exists
@@ -32,7 +33,7 @@ async function registerUser(userData) {
     email: email.toLowerCase(),
   });
   if (existingUser) {
-    throw new Error("User with this email already exists");
+    throw new AppError("User with this email already exists", 409);
   }
 
   // Hash password
@@ -81,7 +82,7 @@ async function loginUser(credentials) {
 
   // Validation
   if (!email || !password) {
-    throw new Error("Email and password are required");
+    throw new AppError("Email and password are required", 400);
   }
 
   // Find user
@@ -89,13 +90,13 @@ async function loginUser(credentials) {
     "+password"
   );
   if (!user) {
-    throw new Error("Invalid email or password");
+    throw new AppError("Invalid email or password", 401);
   }
 
   // Verify password
   const isPasswordValid = await comparePassword(password, user.password);
   if (!isPasswordValid) {
-    throw new Error("Invalid email or password");
+    throw new AppError("Invalid email or password", 401);
   }
 
   // Generate tokens
@@ -128,19 +129,19 @@ async function loginUser(credentials) {
  */
 async function refreshAccessToken(refreshToken) {
   if (!refreshToken) {
-    throw new Error("Refresh token is required");
+    throw new AppError("Refresh token is required", 400);
   }
 
   // Verify refresh token
   const decoded = verifyRefreshToken(refreshToken);
   if (!decoded) {
-    throw new Error("Invalid or expired refresh token");
+    throw new AppError("Invalid or expired refresh token", 403);
   }
 
   // Find user to ensure they still exist
   const user = await User.findById(decoded.id);
   if (!user) {
-    throw new Error("User not found");
+    throw new AppError("User not found", 404);
   }
 
   // Generate new access token
@@ -165,7 +166,7 @@ async function refreshAccessToken(refreshToken) {
 async function getUserById(userId) {
   const user = await User.findById(userId);
   if (!user) {
-    throw new Error("User not found");
+    throw new AppError("User not found", 404);
   }
 
   // Return user without password (MongoDB model handles this via toJSON)

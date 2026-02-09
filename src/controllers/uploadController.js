@@ -2,6 +2,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const os = require("os");
+const AppError = require("../utils/AppError");
 const { clients, admins, pendingCommands } = require('../services/socketService');
 
 // Set up multer storage
@@ -34,6 +35,7 @@ function handleFileUpload(req, res) {
   upload(req, res, (err) => {
     if (err) {
       return res.status(400).json({
+        status: "error",
         message: "Error uploading files",
         error: err.message,
       });
@@ -44,6 +46,7 @@ function handleFileUpload(req, res) {
 
     if (!savePaths) {
       return res.status(400).json({
+        status: "error",
         message: "No savePaths provided",
       });
     }
@@ -156,26 +159,20 @@ function handleUploadRequest(req, res) {
   const { clientSocketId, adminSocketId, path } = req.body;
 
   if (!clientSocketId || !path) {
-    return res.status(400).json({
-      message: 'Missing required fields: clientSocketId and path',
-    });
+    throw new AppError('Missing required fields: clientSocketId and path', 400);
   }
 
   // Check if client is connected
   const client = clients.get(clientSocketId);
   if (!client) {
-    return res.status(404).json({
-      message: 'Client not found or disconnected',
-    });
+    throw new AppError('Client not found or disconnected', 404);
   }
 
   // Check if admin is connected (if adminSocketId provided)
   if (adminSocketId) {
     const admin = admins.get(adminSocketId);
     if (!admin) {
-      return res.status(404).json({
-        message: 'Admin not found or disconnected',
-      });
+      throw new AppError('Admin not found or disconnected', 404);
     }
   }
 
