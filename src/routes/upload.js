@@ -1,7 +1,6 @@
 const express = require("express");
 const router = express.Router();
 const uploadController = require("../controllers/uploadController");
-const uploadRequestController = require("../controllers/uploadRequestController");
 
 /**
  * POST /upload
@@ -13,7 +12,7 @@ router.post("/", uploadController.handleFileUpload);
  * POST /upload/request
  * Request upload of file or directory from client
  */
-router.post("/request", uploadRequestController.handleUploadRequest);
+router.post("/request", uploadController.handleUploadRequest);
 
 module.exports = router;
 

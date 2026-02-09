@@ -1,4 +1,5 @@
 const { verifyAccessToken } = require("../utils/jwt");
+const AppError = require("../utils/AppError");
 
 /**
  * Middleware to authenticate requests using JWT access token
@@ -11,13 +12,13 @@ function authenticateToken(req, res, next) {
   const token = authHeader && authHeader.split(" ")[1]; // Bearer TOKEN
 
   if (!token) {
-    return res.status(401).json({ message: "Access token required" });
+    return next(new AppError("Access token required", 401));
   }
 
   const decoded = verifyAccessToken(token);
 
   if (!decoded) {
-    return res.status(403).json({ message: "Invalid or expired token" });
+    return next(new AppError("Invalid or expired token", 403));
   }
 
   // Attach user info to request
