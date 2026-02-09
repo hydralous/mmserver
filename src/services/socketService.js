@@ -167,6 +167,7 @@ function initializeSocketIO(httpServer) {
 module.exports = {
   initializeSocketIO,
   getAllClientsInfo,
+  broadcastToAdmins,
   clients,
   admins,
   pendingCommands,
