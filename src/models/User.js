@@ -32,9 +32,6 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-// Create indexes for better query performance
-userSchema.index({ email: 1 });
-
 // Remove password from JSON output
 userSchema.methods.toJSON = function () {
   const userObject = this.toObject();
