@@ -1,54 +1,54 @@
-const https = require("https");
-
 /**
  * Get geolocation information from IP address
  * @param {string} ip - IP address
  * @returns {Promise<object|null>} - Geolocation data or null on error
  */
-function getLocationFromIP(ip) {
-  return new Promise((resolve, reject) => {
-    // Skip if IP is localhost, unknown, or invalid
-    if (!ip || ip === 'unknown' || ip === '::1' || ip.startsWith('127.') || ip.startsWith('192.168.') || ip.startsWith('10.') || ip.startsWith('172.')) {
-      resolve(null);
-      return;
+async function getLocationFromIP(ip) {
+  // Skip if IP is localhost, unknown, or invalid
+  if (!ip || ip === 'unknown' || ip === '::1' || ip.startsWith('127.') || ip.startsWith('192.168.') || ip.startsWith('10.') || ip.startsWith('172.')) {
+    return null;
+  }
+
+  try {
+    // Use http:// as it works well according to user
+    const url = `http://ip-api.com/json/${ip}?fields=status,message,country,countryCode,region,regionName,city,zip,lat,lon,timezone,isp,org,as,query`;
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+      // Add timeout (10 seconds)
+      signal: AbortSignal.timeout(10000)
+    });
+
+    if (!response.ok) {
+      console.error(`IP API responded with status: ${response.status}`);
+      return null;
     }
 
-    const url = `https://ip-api.com/json/${ip}?fields=status,message,country,countryCode,region,regionName,city,zip,lat,lon,timezone,isp,org,as,query`;
+    const result = await response.json();
     
-    https.get(url, (res) => {
-      let data = '';
-      
-      res.on('data', (chunk) => {
-        data += chunk;
-      });
-      
-      res.on('end', () => {
-        try {
-          const result = JSON.parse(data);
-          if (result.status === 'success') {
-            resolve({
-              country: result.country,
-              countryCode: result.countryCode,
-              region: result.regionName,
-              city: result.city,
-              zip: result.zip,
-              latitude: result.lat,
-              longitude: result.lon,
-              timezone: result.timezone,
-              isp: result.isp,
-              org: result.org
-            });
-          } else {
-            resolve(null);
-          }
-        } catch (error) {
-          reject(error);
-        }
-      });
-    }).on('error', (error) => {
-      reject(error);
-    });
-  });
+    if (result.status === 'success') {
+      return {
+        country: result.country,
+        countryCode: result.countryCode,
+        region: result.regionName,
+        city: result.city,
+        zip: result.zip,
+        latitude: result.lat,
+        longitude: result.lon,
+        timezone: result.timezone,
+        isp: result.isp,
+        org: result.org
+      };
+    } else {
+      return null;
+    }
+  } catch (error) {
+    console.error("Error fetching geolocation from IP:", error.message);
+    return null;
+  }
 }
 
 /**
