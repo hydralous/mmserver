@@ -7,5 +7,9 @@ const asyncHandler = require("../utils/asyncHandler");
 router.get("/", asyncHandler(healthController.healthCheck));
 router.post("/", asyncHandler(healthController.healthCheck));
 
+// Health records routes
+router.get("/records", asyncHandler(healthController.getHealthRecords));
+router.get("/records/:id", asyncHandler(healthController.getHealthRecordById));
+
 module.exports = router;
 

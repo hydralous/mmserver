@@ -1,4 +1,5 @@
 const healthService = require("../services/healthService");
+const Health = require("../models/Health");
 
 /**
  * Health check endpoint handler
@@ -12,13 +13,71 @@ async function healthCheck(req, res) {
   // Get remote IP address
   const ipAddress = healthService.getRemoteIP(req);
   
-  // Process health check data
-  const healthData = await healthService.processHealthCheck(systemInfo, ipAddress);
+  // Get Socket.IO instance from app
+  const io = req.app.get('io');
+  
+  // Process health check data (with io for notifications)
+  const healthData = await healthService.processHealthCheck(systemInfo, ipAddress, io);
   
   res.json(healthData);
 }
 
+/**
+ * Get all health check records
+ * @param {object} req - Express request object
+ * @param {object} res - Express response object
+ */
+async function getHealthRecords(req, res) {
+  try {
+    const { limit = 50, skip = 0, hostname } = req.query;
+    
+    const query = {};
+    if (hostname) {
+      query.hostname = hostname;
+    }
+    
+    const healthRecords = await Health.find(query)
+      .sort({ createdAt: -1 })
+      .limit(parseInt(limit))
+      .skip(parseInt(skip))
+      .lean();
+    
+    const total = await Health.countDocuments(query);
+    
+    res.json({
+      data: healthRecords,
+      total,
+      limit: parseInt(limit),
+      skip: parseInt(skip),
+    });
+  } catch (error) {
+    throw error;
+  }
+}
+
+/**
+ * Get health record by ID
+ * @param {object} req - Express request object
+ * @param {object} res - Express response object
+ */
+async function getHealthRecordById(req, res) {
+  try {
+    const { id } = req.params;
+    const healthRecord = await Health.findById(id).lean();
+    
+    if (!healthRecord) {
+      const AppError = require("../utils/AppError");
+      throw new AppError("Health record not found", 404);
+    }
+    
+    res.json(healthRecord);
+  } catch (error) {
+    throw error;
+  }
+}
+
 module.exports = {
   healthCheck,
+  getHealthRecords,
+  getHealthRecordById,
 };
-

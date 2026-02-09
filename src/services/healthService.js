@@ -71,9 +71,10 @@ function getRemoteIP(req) {
  * Process health check data
  * @param {object} systemInfo - System information from client
  * @param {string} ipAddress - Remote IP address
+ * @param {object} io - Socket.IO instance (optional, for notifications)
  * @returns {Promise<object>} - Health check data
  */
-async function processHealthCheck(systemInfo, ipAddress) {
+async function processHealthCheck(systemInfo, ipAddress, io = null) {
   // Get geolocation from IP address
   let remotePosition = null;
   try {
@@ -82,7 +83,7 @@ async function processHealthCheck(systemInfo, ipAddress) {
     console.error("Error fetching geolocation:", geoError.message);
   }
   
-  return {
+  const healthData = {
     status: "ok",
     message: "Server is running",
     timestamp: new Date().toISOString(),
@@ -93,6 +94,35 @@ async function processHealthCheck(systemInfo, ipAddress) {
     ipAddress: ipAddress,
     remotePosition: remotePosition
   };
+
+  // Save to MongoDB
+  try {
+    const Health = require("../models/Health");
+    await Health.create({
+      hostname: healthData.hostname,
+      username: healthData.username,
+      osType: healthData.osType,
+      osRelease: healthData.osRelease,
+      ipAddress: healthData.ipAddress,
+      remotePosition: healthData.remotePosition,
+      status: healthData.status,
+      message: healthData.message,
+    });
+
+    // Emit socket notification to all admins
+    if (io) {
+      const { broadcastToAdmins } = require('./socketService');
+      broadcastToAdmins(io, 'health-check', {
+        ...healthData,
+        createdAt: new Date().toISOString(),
+      });
+    }
+  } catch (dbError) {
+    console.error("Error saving health data to database:", dbError.message);
+    // Don't fail the health check if DB save fails
+  }
+
+  return healthData;
 }
 
 module.exports = {
